@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Time Dilation Calculator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #000000, #1a365d, #2d3748);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            color: white;
+        }
+
+        .container {
+            background: rgba(45, 55, 72, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            padding: 2rem;
+            width: 100%;
+            max-width: 500px;
+            border: 1px solid rgba(66, 153, 225, 0.3);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+
+        .header h1 {
+            font-size: 1.875rem;
+            font-weight: bold;
+            margin: 0 1rem;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .input-group i {
+            color: #63b3ed;
+            width: 24px;
+        }
+
+        .input-group label {
+            min-width: 80px;
+        }
+
+        input, select {
+            background: #4a5568;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            width: 100%;
+            outline: none;
+        }
+
+        select {
+            width: auto;
+        }
+
+        button {
+            width: 100%;
+            background: #2b6cb0;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background: #2c5282;
+        }
+
+        .result {
+            margin-top: 1rem;
+            background: #4a5568;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .result h2 {
+            color: #63b3ed;
+            margin-bottom: 0.5rem;
+        }
+
+        .result span {
+            color: #63b3ed;
+            word-break: break-word;
+        }
+
+        .error {
+            background: rgba(245, 101, 101, 0.3);
+            color: #feb2b2;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: center;
+            margin-top: 1rem;
+        }
+
+        .info-icon {
+            position: absolute;
+            right: 0;
+            color: #63b3ed;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .info-icon:hover {
+            color: #90cdf4;
+        }
+
+        .small-text {
+            font-size: 0.875rem;
+            color: #a0aec0;
+            margin-top: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <i class="fas fa-rocket fa-2x" style="color: #63b3ed;"></i>
+            <h1>Time Dilation Calculator</h1>
+            <i class="fas fa-info-circle info-icon" onclick="toggleInfo()"></i>
+        </div>
+
+        <div class="input-group">
+            <i class="fas fa-clock"></i>
+            <label>Time:</label>
+            <input type="number" id="time" min="0" value="1">
+            <select id="timeUnit">
+                <option value="seconds">seconds</option>
+                <option value="minutes">minutes</option>
+                <option value="hours">hours</option>
+                <option value="days">days</option>
+                <option value="years">years</option>
+            </select>
+        </div>
+
+        <div class="input-group">
+            <i class="fas fa-meteor"></i>
+            <label>Velocity (m/s):</label>
+            <input type="number" id="velocity" min="0" max="299792458">
+        </div>
+
+        <button onclick="calculateTimeDilation()">Calculate Time Dilation</button>
+
+        <div id="error" class="error" style="display: none;"></div>
+        <div id="result" class="result" style="display: none;"></div>
+    </div>
+
+    <script>
+        const SPEED_OF_LIGHT = 299792458;
+        const TIME_UNITS = {
+            seconds: 1,
+            minutes: 60,
+            hours: 3600,
+            days: 86400,
+            years: 31536000
+        };
+
+        function formatLargeNumber(num) {
+            if (!isFinite(num) || isNaN(num)) return "Extremely Large Number";
+            
+            if (num > 1e50) {
+                const exponent = Math.floor(Math.log10(num));
+                const mantissa = num / Math.pow(10, exponent);
+                return `${mantissa.toFixed(4)} × 10^${exponent}`;
+            }
+            return num.toLocaleString('en-US', { 
+                maximumFractionDigits: 20,
+                useGrouping: true 
+            });
+        }
+
+        function calculateTimeDilation() {
+            const time = parseFloat(document.getElementById('time').value);
+            const timeUnit = document.getElementById('timeUnit').value;
+            const velocity = parseFloat(document.getElementById('velocity').value);
+            
+            const errorDiv = document.getElementById('error');
+            const resultDiv = document.getElementById('result');
+            
+            errorDiv.style.display = 'none';
+            resultDiv.style.display = 'none';
+
+            if (time < 0) {
+                errorDiv.textContent = "Time cannot be negative";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            if (velocity < 0) {
+                errorDiv.textContent = "Velocity cannot be negative";
+                errorDiv.style.display = 'block';
+                return;
+            }
+
+            const timeInSeconds = time * TIME_UNITS[timeUnit];
+            const speedRatio = Math.min(velocity, SPEED_OF_LIGHT - 0.000001) / SPEED_OF_LIGHT;
+
+            if (speedRatio <= 0) return;
+
+            const dilationFactor = 1 / Math.sqrt(1 - Math.pow(speedRatio, 2));
+            const dilatedTimeInSeconds = timeInSeconds * dilationFactor;
+            const dilatedTime = dilatedTimeInSeconds / TIME_UNITS[timeUnit];
+
+            resultDiv.innerHTML = `
+                <h2>Dilation Results</h2>
+                <p>Dilation Factor: <span>${formatLargeNumber(dilationFactor)}</span></p>
+                <p>Dilated Time: <span>${formatLargeNumber(dilatedTime)} ${timeUnit}</span></p>
+                <div class="small-text">
+                    * At ${velocity.toLocaleString()} m/s<br>
+                    * Speed Ratio: ${(speedRatio * 100).toFixed(6)}%<br>
+                    * Original Time: ${time} ${timeUnit}
+                </div>
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function toggleInfo() {
+            alert("Double tap or click the info icon to learn more about time dilation!");
+        }
+    </script>
+</body>
+</html>
